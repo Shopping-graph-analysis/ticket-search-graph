@@ -1,0 +1,38 @@
+name: Python CI
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.12'
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+      - name: Test with pytest
+        run: |
+          pip install pytest
+          pytest
+      - name: Zip artifact
+        run: |
+          mkdir package
+          pip install -r requirements.txt -t package/
+          cd package
+          zip -r ../lambda_function.zip .
+          cd ..
+          zip -g lambda_function.zip main.py
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: lambda-bundle
+          path: lambda_function.zip
